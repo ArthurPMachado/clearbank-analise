@@ -1,0 +1,31 @@
+id,data,cliente_id,tipo,valor,descricao,categoria
+1,2026-01-05,CLI001,credito,3500.00,Salário janeiro,salario
+2,2026-01-12,CLI002,debito,180.50,Supermercado,compra
+3,2026-01-18,CLI003,debito,450.00,Aluguel janeiro,transferencia
+4,2026-01-22,CLI001,debito,89.90,Academia mensal,assinatura
+5,2026-01-28,CLI004,credito,12500.00,Transferência recebida,transferencia
+6,2026-02-03,CLI002,debito,200.00,Conta de água,conta
+7,2026-02-10,CLI003,credito,3500.00,Salário fevereiro,salario
+8,2026-02-14,CLI005,credito,15000.00,Transferência internacional,transferencia
+9,2026-02-18,CLI002,debito,320.00,Conta de luz,conta
+10,2026-02-22,CLI001,debito,1200.00,Manutenção veículo,compra
+11,2026-02-25,CLI004,debito,55.90,Netflix assinatura,assinatura
+12,2026-03-01,CLI001,credito,3500.00,Salário março,salario
+13,2026-03-05,CLI003,debito,780.00,Supermercado mensal,compra
+14,2026-03-10,CLI005,debito,99.90,Streaming,assinatura
+15,2026-03-15,CLI002,credito,500.00,Reembolso despesas,transferencia
+16,2026-03-20,CLI004,debito,2300.00,Passagem aérea,compra
+17,2026-03-25,CLI003,credito,4200.00,Freelance projeto,salario
+18,2026-03-28,CLI001,debito,149.00,Seguro de vida,conta
+19,2026-04-02,CLI002,credito,3500.00,Salário abril,salario
+20,2026-04-08,CLI005,debito,680.00,Restaurante,compra
+21,2026-04-12,CLI004,credito,18000.00,Venda de imóvel,transferencia
+22,2026-04-18,CLI001,debito,350.00,Material escritório,compra
+23,2026-04-25,CLI003,debito,210.00,Farmácia,compra
+24,2026-04-30,CLI002,debito,1800.00,IPTU,conta
+25,abc,CLI001,debito,100.00,ID inválido,compra
+26,2026-02-20,,debito,200.00,Sem cliente,transferencia
+27,2026-03-12,CLI002,pix,150.00,Tipo inválido,transferencia
+28,2026-04-05,CLI003,debito,abc,Valor inválido,compra
+29,2026-13-01,CLI004,credito,300.00,Data inválida,salario
+30,,CLI005,credito,500.00,ID vazio,transferencia
