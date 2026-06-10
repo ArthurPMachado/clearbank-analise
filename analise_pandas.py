@@ -1,169 +1,157 @@
-"""
-analise_pandas.py – Requisito Opcional 1 (RO1)
-Implementação alternativa da análise usando pandas.
-Os resultados são comparados com os obtidos pela solução nativa do notebook.
-"""
-
 import json
 from datetime import datetime
 
 import pandas as pd
 
-# ── Constantes (mesmas do notebook principal) ─────────────────────────────────
-LIMITE_SUSPEITO: float = 10_000.00
-ARQUIVO_CSV: str = "transacoes.csv"
-ARQUIVO_JSON: str = "relatorio.json"
+# ── Constants ─────────────────────────────────
+MAX_VALUE: float = 10_000.00
+CSV_FILE: str = "transacoes.csv"
+JSON_FILE: str = "relatorio.json"
 
+def currency_format(value: float) -> str:
+    """Format a float to brazil real: R$ 1.840,25"""
+    return f"R$ {value:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
-def formatar_moeda(valor: float) -> str:
-    """Formata um float no padrão monetário brasileiro: R$ 1.840,25"""
-    return f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-
-
-def carregar_e_validar_pandas(filepath: str) -> pd.DataFrame:
+def load_file_and_validate_data(filepath: str) -> pd.DataFrame:
     """
-    Carrega o CSV com pd.read_csv e aplica as mesmas regras de validação
-    usadas na solução nativa do notebook.
+    Load the csv and apply the same validation rules from notebook
     """
+
     try:
-        df = pd.read_csv(filepath, dtype=str)
+        dataframe = pd.read_csv(filepath, dtype=str)
     except FileNotFoundError:
-        print(f"ERRO: Arquivo '{filepath}' não encontrado.")
+        print(f"ERROR: File '{filepath}' not found.")
         return pd.DataFrame()
 
-    total_lidas = len(df)
+    transaction_rows = len(dataframe)
 
-    # Remover linhas com id vazio ou não numérico
-    df = df[df["id"].notna() & df["id"].str.strip().str.match(r"^\d+$")]
+    valid_id = dataframe["id"].notna() & dataframe["id"].str.strip().str.match(r"^\d+$")
+    valid_client_id = dataframe["cliente_id"].notna() & dataframe["cliente_id"].str.strip().ne("")
+    
+    dataframe = dataframe[valid_id]
+    dataframe = dataframe[valid_client_id]
 
-    # Remover linhas com cliente_id vazio
-    df = df[df["cliente_id"].notna() & df["cliente_id"].str.strip().ne("")]
+    dataframe["data"] = pd.to_datetime(dataframe["data"].str.strip(), format="%Y-%m-%d", errors="coerce")
+    dataframe = dataframe[dataframe["data"].notna()]
 
-    # Converter data e remover linhas com formato inválido
-    df["data"] = pd.to_datetime(df["data"].str.strip(), format="%Y-%m-%d", errors="coerce")
-    df = df[df["data"].notna()]
+    dataframe["tipo"] = dataframe["tipo"].str.strip().str.lower()
+    dataframe = dataframe[dataframe["tipo"].isin(["credito", "debito"])]
 
-    # Manter apenas tipo credito ou debito
-    df["tipo"] = df["tipo"].str.strip().str.lower()
-    df = df[df["tipo"].isin(["credito", "debito"])]
+    dataframe["valor"] = pd.to_numeric(dataframe["valor"].str.strip(), errors="coerce")
+    dataframe = dataframe[dataframe["valor"].notna() & (dataframe["valor"] > 0)]
 
-    # Converter valor e remover linhas não numéricas ou <= 0
-    df["valor"] = pd.to_numeric(df["valor"].str.strip(), errors="coerce")
-    df = df[df["valor"].notna() & (df["valor"] > 0)]
+    dataframe["id"] = dataframe["id"].astype(int)
+    dataframe["mes"] = dataframe["data"].dt.strftime("%Y-%m")
 
-    # Conversão de tipos finais
-    df["id"] = df["id"].astype(int)
-    df["mes"] = df["data"].dt.strftime("%Y-%m")
-
-    validas = len(df)
-    invalidas = total_lidas - validas
+    valid_transactions = len(dataframe)
+    invalid_transactions = transaction_rows - valid_transactions
 
     print("===== RESUMO DA LIMPEZA (PANDAS) =====")
-    print(f"Total de linhas lidas: {total_lidas}")
-    print(f"Linhas válidas:        {validas}")
-    print(f"Linhas inválidas:      {invalidas}")
+    print(f"Total de linhas lidas: {transaction_rows}")
+    print(f"Linhas válidas:        {valid_transactions}")
+    print(f"Linhas inválidas:      {invalid_transactions}")
 
-    return df
+    return dataframe
 
 
-def gerar_resumo_mensal_pandas(df: pd.DataFrame) -> pd.DataFrame:
+def build_mensal_report(dataframe: pd.DataFrame) -> pd.DataFrame:
     """
-    Agrupa por mês e calcula todas as métricas financeiras usando groupby.
+    Group by month and calculate all financial metrics using groupby
     """
-    credito_mensal = (
-        df[df["tipo"] == "credito"]
+
+    mensal_credit = (
+        dataframe[dataframe["tipo"] == "credito"]
         .groupby("mes")["valor"]
         .sum()
         .rename("total_credito")
     )
 
-    debito_mensal = (
-        df[df["tipo"] == "debito"]
+    mensal_debt = (
+        dataframe[dataframe["tipo"] == "debito"]
         .groupby("mes")["valor"]
         .sum()
         .rename("total_debito")
     )
 
-    resumo = df.groupby("mes").agg(
+    summary = dataframe.groupby("mes").agg(
         quantidade=("id", "count"),
         media=("valor", "mean"),
         maior_valor=("valor", "max"),
         menor_valor=("valor", "min"),
     )
 
-    resumo = resumo.join(credito_mensal, how="left").join(debito_mensal, how="left")
-    resumo[["total_credito", "total_debito"]] = resumo[["total_credito", "total_debito"]].fillna(0.0)
-    resumo["saldo"] = resumo["total_credito"] - resumo["total_debito"]
+    summary = summary.join(mensal_credit, how="left").join(mensal_debt, how="left")
+    summary[["total_credito", "total_debito"]] = summary[["total_credito", "total_debito"]].fillna(0.0)
+    summary["saldo"] = summary["total_credito"] - summary["total_debito"]
 
-    return resumo.round(2)
+    return summary.round(2)
 
 
-def exibir_comparacao(resumo_pandas: pd.DataFrame, relatorio_nativo: dict) -> None:
+def show_comparison(pandas_summary: pd.DataFrame, notebook_report: dict) -> None:
     """
-    Imprime lado a lado os resultados pandas vs. nativo para cada mês.
+    Print side by side the results from pandas vs notebook for each month
     """
+
     print("\n===== RELATÓRIO MENSAL (PANDAS) =====")
-    for mes, row in resumo_pandas.iterrows():
-        print(f"\nMês: {mes}")
+    for month, row in pandas_summary.iterrows():
+        print(f"\nMês: {month}")
         print(f"  Transações:    {int(row['quantidade'])}")
-        print(f"  Total crédito: {formatar_moeda(row['total_credito'])}")
-        print(f"  Total débito:  {formatar_moeda(row['total_debito'])}")
-        print(f"  Saldo:         {formatar_moeda(row['saldo'])}")
-        print(f"  Média:         {formatar_moeda(row['media'])}")
-        print(f"  Maior valor:   {formatar_moeda(row['maior_valor'])}")
-        print(f"  Menor valor:   {formatar_moeda(row['menor_valor'])}")
+        print(f"  Total crédito: {currency_format(row['total_credito'])}")
+        print(f"  Total débito:  {currency_format(row['total_debito'])}")
+        print(f"  Saldo:         {currency_format(row['saldo'])}")
+        print(f"  Média:         {currency_format(row['media'])}")
+        print(f"  Maior valor:   {currency_format(row['maior_valor'])}")
+        print(f"  Menor valor:   {currency_format(row['menor_valor'])}")
 
-    if not relatorio_nativo:
-        print("\n(Arquivo relatorio.json não encontrado; comparação pulada.)")
+    if not notebook_report:
+        print("\n(File relatorio.json not found; skipped comparison.)")
         return
 
-    print("\n===== COMPARAÇÃO PANDAS vs. NATIVO =====")
-    todos_iguais = True
-    for mes in resumo_pandas.index:
-        nativo = relatorio_nativo.get("resumo_mensal", {}).get(mes)
-        if not nativo:
-            print(f"Mês {mes}: não encontrado no relatório nativo.")
-            todos_iguais = False
+    print("\n===== COMPARISON PANDAS vs. NOTEBOOK =====")
+    equal = True
+    for month in pandas_summary.index:
+        notebook = notebook_report.get("resumo_mensal", {}).get(month)
+        if not notebook:
+            print(f"Mês {month}: not found on notebook report.")
+            equal = False
             continue
 
-        campos = ["total_credito", "total_debito", "saldo", "media", "maior_valor", "menor_valor"]
-        for campo in campos:
-            val_pandas = round(float(resumo_pandas.loc[mes, campo]), 2)
-            val_nativo = round(float(nativo[campo]), 2)
-            if val_pandas != val_nativo:
-                print(f"  DIVERGÊNCIA em {mes} / {campo}: pandas={val_pandas}, nativo={val_nativo}")
-                todos_iguais = False
+        fields = ["total_credito", "total_debito", "saldo", "media", "maior_valor", "menor_valor"]
+        for field in fields:
+            val_pandas = round(float(pandas_summary.loc[month, field]), 2)
+            val_notebook = round(float(notebook[field]), 2)
+            if val_pandas != val_notebook:
+                print(f"  DIVERGENCE on {month} / {field}: pandas={val_pandas}, notebook={val_notebook}")
+                equal = False
 
-    if todos_iguais:
-        print("RESULTADO: Todos os valores coincidem entre pandas e nativo.")
+    if equal:
+        print("RESULT: All values match!!")
     else:
-        print("RESULTADO: Foram encontradas divergências (verifique acima).")
+        print("RESULT: Was found divergencies")
 
 
 def main() -> None:
-    df = carregar_e_validar_pandas(ARQUIVO_CSV)
+    dataframe = load_file_and_validate_data(CSV_FILE)
 
-    if df.empty:
-        print("Nenhuma transação válida encontrada. Encerrando.")
+    if dataframe.empty:
+        print("No valid transaction found.")
         return
 
-    resumo_pandas = gerar_resumo_mensal_pandas(df)
+    pandas_summary = build_mensal_report(dataframe)
 
-    # Suspeitas via pandas
-    suspeitas = df[df["valor"] > LIMITE_SUSPEITO][["id", "cliente_id", "data", "valor"]]
-    print(f"\nTransações suspeitas (valor > {formatar_moeda(LIMITE_SUSPEITO)}): {len(suspeitas)}")
-    for _, row in suspeitas.iterrows():
+    suspicious_transactions = dataframe[dataframe["valor"] > MAX_VALUE][["id", "cliente_id", "data", "valor"]]
+    print(f"\n Suspicious transactions (valor > {currency_format(MAX_VALUE)}): {len(suspicious_transactions)}")
+    for _, row in suspicious_transactions.iterrows():
         data_fmt = row["data"].strftime("%Y-%m-%d") if hasattr(row["data"], "strftime") else str(row["data"])
-        print(f"  ID: {int(row['id'])} | Cliente: {row['cliente_id']} | Data: {data_fmt} | Valor: {formatar_moeda(row['valor'])}")
+        print(f"  ID: {int(row['id'])} | Cliente: {row['cliente_id']} | Data: {data_fmt} | Valor: {currency_format(row['valor'])}")
 
-    # Carregar relatório nativo para comparação
     try:
-        with open(ARQUIVO_JSON, encoding="utf-8") as f:
-            relatorio_nativo = json.load(f)
+        with open(JSON_FILE, encoding="utf-8") as f:
+            notebook_report = json.load(f)
     except FileNotFoundError:
-        relatorio_nativo = {}
+        notebook_report = {}
 
-    exibir_comparacao(resumo_pandas, relatorio_nativo)
+    show_comparison(pandas_summary, notebook_report)
 
 
 if __name__ == "__main__":
