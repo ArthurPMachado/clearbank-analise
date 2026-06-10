@@ -20,10 +20,10 @@ id,data,cliente_id,tipo,valor,descricao,categoria
 19,2026-04-02,CLI002,credito,3500.00,Salário abril,salario
 20,2026-04-08,CLI005,debito,680.00,Restaurante,compra
 21,2026-04-12,CLI004,credito,18000.00,Venda de imóvel,transferencia
-22,2026-04-18,CLI001,debito,350.00,Material escritório,compra
+22,2026-04-18,CLI001,debito,-350.00,Material escritório,compra
 23,2026-04-25,CLI003,debito,210.00,Farmácia,compra
 24,2026-04-30,CLI002,debito,1800.00,IPTU,conta
-25,abc,CLI001,debito,100.00,ID inválido,compra
+25,abc,CLI001,pix,100.00,ID inválido,compra
 26,2026-02-20,,debito,200.00,Sem cliente,transferencia
 27,2026-03-12,CLI002,pix,150.00,Tipo inválido,transferencia
 28,2026-04-05,CLI003,debito,abc,Valor inválido,compra
