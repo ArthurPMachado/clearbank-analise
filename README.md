@@ -1,17 +1,17 @@
 # ClearBank – Análise Financeira de Transações
 
 Projeto de análise de dados financeiros desenvolvido para a fintech **ClearBank**.  
-Processa um arquivo CSV de transações mensais, valida os dados, gera métricas financeiras, identifica transações suspeitas e exporta um relatório em JSON.
+Processa um arquivo CSV de transações mensais, valida os dados, gera métricas financeiras, identifica transações suspeitas, exporta um relatório em JSON e um grafico de barras empilhado sobre o credito e debito mensal
 
 ## Estrutura do Projeto
 
 ```
-clearbank-analise/
+ftr-analise-financeira/
 ├── desafio-final.ipynb   # Notebook principal com toda a solução
-├── transacoes.csv        # Arquivo de entrada com os dados de transações
+├── transacoes.csv        # Arquivo de entrada com os dados das transações
 ├── relatorio.json        # Gerado pelo notebook após execução
-├── grafico.png           # Gerado pelo notebook (requisito opcional RO2)
-├── analise_pandas.py     # Análise alternativa com pandas (requisito opcional RO1)
+├── grafico.png           # Gerado pelo notebook usando matplotlib
+├── analise_pandas.py     # Análise alternativa com pandas
 └── README.md             # Este arquivo
 ```
 
@@ -19,7 +19,7 @@ clearbank-analise/
 
 - Python 3.10 ou superior
 - Jupyter Notebook ou Google Colab
-- Para os requisitos opcionais: `pip install pandas matplotlib`
+- Para a geração do gráfico e analise alternativa com pandas é necessario instalar os pacotes: `pip install pandas matplotlib`
 
 ## Como Executar
 
@@ -37,7 +37,7 @@ clearbank-analise/
 1. Faça upload do notebook `desafio-final.ipynb` e do arquivo `transacoes.csv` no Colab.
 2. Clique em **Runtime → Run all** (ou `Ctrl+F9`).
 
-### Análise com pandas (RO1)
+### Análise com pandas
 
 Após executar o notebook principal (para gerar o `relatorio.json`), execute:
 
@@ -85,9 +85,9 @@ Linhas do CSV são descartadas silenciosamente quando:
 
 ## Tecnologias Utilizadas
 
-- **Python 3.10+** – linguagem principal
+- **Python 3.14.5+** – linguagem principal
 - **csv** (nativo) – leitura do arquivo de transações
 - **datetime** (nativo) – manipulação e validação de datas
-- **json** (nativo) – exportação do relatório
+- **json** (nativo) – exportar o relatório
 - **pandas** – análise alternativa (opcional)
 - **matplotlib** – geração de gráfico (opcional)
