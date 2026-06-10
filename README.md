@@ -6,7 +6,7 @@ Processa um arquivo CSV de transações mensais, valida os dados, gera métricas
 ## Estrutura do Projeto
 
 ```
-ftr-analise-financeira/
+clearbank-analise/
 ├── desafio-final.ipynb   # Notebook principal com toda a solução
 ├── transacoes.csv        # Arquivo de entrada com os dados das transações
 ├── relatorio.json        # Gerado pelo notebook após execução
